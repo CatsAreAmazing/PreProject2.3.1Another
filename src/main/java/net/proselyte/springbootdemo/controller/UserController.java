@@ -5,9 +5,7 @@ import net.proselyte.springbootdemo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -20,41 +18,39 @@ public class UserController {
     public UserController(UserService userService) {
         this.userService = userService;
     }
-
-    @GetMapping("/users")
-    public String findAll(Model model){
-        List<User> users = userService.findAll();
-        model.addAttribute("users", users);
-        return "user-list";
+    @GetMapping(value = "/")
+    public String index(Model model) {
+        model.addAttribute("users", userService.findAll());
+        model.addAttribute("newUser", new User());
+        return "users";
     }
+    //7. Используйте ReqestParam аннотацию, использование аннотации PathVariable запрещено
+    //Кажется, в этот раз ничего не забыл.
 
-    @GetMapping("/user-create")
-    public String createUserForm(User user){
-        return "user-create";
-    }
-
-    @PostMapping("/user-create")
-    public String createUser(User user){
+    @PostMapping("/create")
+    public String create(@ModelAttribute("user") User user) {
         userService.saveUser(user);
-        return "redirect:/users";
+        return "redirect:/";
     }
 
-    @GetMapping("user-delete/{id}")
-    public String deleteUser(@PathVariable("id") Long id){
+    @GetMapping("/edit")
+    public String edit(Model model, @RequestParam("id") int id) {
+        model.addAttribute("user", userService.findById(id));
+        return "edit";
+    }
+
+    //Put просто ради того чтобы оба маппинга были привязаны к настройке, которую пришлось изменить,
+    //чтобы они работали, или есть какая-то причина использовать конкретно для этого варианта обновления
+    //именно put, а не patch?
+    @PutMapping("/update")
+    public String update(@ModelAttribute("user") User user, @RequestParam("id") int id) {
+        userService.saveUser(user);
+        return "redirect:/";
+    }
+
+    @DeleteMapping("/delete")
+    public String delete(@RequestParam("id") int id) {
         userService.deleteById(id);
-        return "redirect:/users";
-    }
-
-    @GetMapping("/user-update/{id}")
-    public String updateUserForm(@PathVariable("id") Long id, Model model){
-        User user = userService.findById(id);
-        model.addAttribute("user", user);
-        return "user-update";
-    }
-
-    @PostMapping("/user-update")
-    public String updateUser(User user){
-        userService.saveUser(user);
-        return "redirect:/users";
+        return "redirect:/";
     }
 }
